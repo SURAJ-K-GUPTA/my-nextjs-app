@@ -1,5 +1,5 @@
 "use client";
-
+import {Suspense} from "react";
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
@@ -142,4 +142,12 @@ const Home = () => {
   );
 };
 
-export default Home;
+const Page = () => {
+  return (
+    <Suspense>
+      <Home/>
+    </Suspense>
+  )
+}
+
+export default Page
