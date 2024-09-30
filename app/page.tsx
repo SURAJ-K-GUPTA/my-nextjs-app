@@ -1,101 +1,144 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import './globals.css';
+import { fetchProducts, incrementSkip, resetSkip } from '../redux/productsSlice'; 
+import { fetchCategories } from '../redux/categoriesSlice'; 
+import { RootState, useAppDispatch } from '../redux/store'; 
+import CategorySelector from '../components/CategorySelector'; 
+import ProductCard from '../components/ProductCard'; 
+
+const Home = () => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const { categories } = useSelector((state: RootState) => state.categories);
+  const { products, total, loading } = useSelector((state: RootState) => state.products);
+
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch categories on starting
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
+  // Populate the state with URL query parameters on load
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category') || '';
+    const searchFromUrl = searchParams.get('search') || '';
+    
+    setSelectedCategory(categoryFromUrl);
+    setSearchQuery(searchFromUrl);
+
+    // Fetch products based on both search and category
+    dispatch(resetSkip());
+    dispatch(fetchProducts({ category: categoryFromUrl, search: searchFromUrl }));
+  }, [searchParams, dispatch]);
+
+  // Update the URL when category or search changes
+  useEffect(() => {
+    const query: any = {};
+    if (searchQuery) {
+      query.search = searchQuery;
+    }
+    if (selectedCategory) {
+      query.category = selectedCategory;
+    }
+
+    // Update URL query parameters
+    router.push(`/?${new URLSearchParams(query).toString()}`);
+  }, [selectedCategory, searchQuery, router]);
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle category selection
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  // Load more products (pagination)
+  const loadMore = () => {
+    dispatch(incrementSkip());
+    dispatch(fetchProducts({ category: selectedCategory, search: searchQuery }));
+  };
+
+  // Reset both search query and category
+  const handleReset = () => {
+    setSearchQuery('');
+    setSelectedCategory('');
+    router.push('/'); // Reset URL to base without query params
+    dispatch(resetSkip());
+    dispatch(fetchProducts({ category: '', search: '' })); // Reset the product list
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="container mx-auto p-4">
+      {/* Search Box */}
+      <div className="mb-4">
+        <input
+          type="text"
+          className="w-full p-2 border border-gray-300 rounded"
+          placeholder="Search for products..."
+          value={searchQuery}
+          onChange={handleSearchChange}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Reset Button */}
+      <div className="mb-4">
+        <button
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+          onClick={handleReset}
+        >
+          Reset Search & Category
+        </button>
+      </div>
+
+      <div className="flex mb-4">
+        {/* Categories */}
+        <div className="w-1/4">
+          <h2 className="text-lg font-semibold mb-2">Categories</h2>
+          <CategorySelector
+            categories={categories} // Pass categories as prop
+            selectedCategory={selectedCategory}
+            setSelectedCategory={handleCategoryChange}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Products */}
+        <div className="w-3/4">
+          {loading ? (
+            <p>Loading products...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination - Load More Button */}
+          {!loading && products.length < total && (
+            <div className="mt-4">
+              <button
+                className="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700"
+                onClick={loadMore}
+              >
+                Load More
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Home;
