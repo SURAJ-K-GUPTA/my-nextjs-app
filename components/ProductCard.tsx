@@ -1,14 +1,32 @@
-import React from 'react';
+import Image from 'next/image'; // Import Next.js Image component
 
-const ProductCard = ({ product }: { product: any }) => {
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description: string;
+  thumbnail: string;
+}
+
+interface ProductCardProps {
+  product: Product;
+}
+
+
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <img src={product.thumbnail} alt={product.title} className="w-full h-48 object-cover" />
-      <div className="p-4">
-        <h3 className="font-semibold text-lg">{product.title}</h3>
-        <p className="text-gray-500">{product.description}</p>
-        <div className="mt-2 text-indigo-600 font-semibold">${product.price}</div>
-      </div>
+    <div className="product-card">
+      {/* Replace <img> with <Image /> */}
+      <Image
+        src={product.thumbnail}
+        alt={product.title}
+        width={300}  // Set width
+        height={300} // Set height
+        className="product-image"
+      />
+      <h2>{product.title}</h2>
+      <p>{product.description}</p>
+      <p className="product-price">${product.price}</p>
     </div>
   );
 };

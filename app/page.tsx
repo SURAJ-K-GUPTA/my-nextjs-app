@@ -41,17 +41,18 @@ const Home = () => {
 
   // Update the URL when category or search changes
   useEffect(() => {
-    const query: any = {};
+    const query: Record<string, string> = {}; // Replace `any` with `Record<string, string>`
     if (searchQuery) {
       query.search = searchQuery;
     }
     if (selectedCategory) {
       query.category = selectedCategory;
     }
-
-    // Update URL query parameters
+  
+    // Update URL query parameters (no page reload, shallow routing)
     router.push(`/?${new URLSearchParams(query).toString()}`);
   }, [selectedCategory, searchQuery, router]);
+  
 
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
